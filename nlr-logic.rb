@@ -19,14 +19,21 @@ module NLRLogic
     end
   end
 
-  def self.which_day_part? hour, minute
-    t = NLRTime.new hour, minute
+  def NLRLogic.which_day_part? hour, minute
+
+    time = NLRTime.new hour, minute
+
     DAY_PARTS.each_with_index do |day_part, i|
-      if t.between? NLRTime.new(day_part[:start_hour], day_part[:start_minute]),
-                    NLRTime.new(DAY_PARTS[i + 1][:start_hour], DAY_PARTS[i + 1][:start_minute])
+
+      next_day_part = DAY_PARTS[i + 1]
+
+      if next_day_part.nil? or time.between? NLRTime.new(day_part[:start_hour], day_part[:start_minute]), NLRTime.new(next_day_part[:start_hour], next_day_part[:start_minute])
         return day_part[:name]
-      else next end
+      else
+        next
+      end
     end
+
   end
 
 end
