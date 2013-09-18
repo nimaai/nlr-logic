@@ -4,8 +4,8 @@ Bundler.require
 module NLRLogic
 
   class DayPart
-    def initialize(name: "", start_hour: 0, start_minute: 0)
-      @name, @start_hour, @start_minute = name, start_hour, start_minute
+    def initialize(name: "", start: NLRTime.new(0, 0))
+      @name, @start_hour, @start_minute = name, start.hour, start.min
     end
   end
 
@@ -13,14 +13,21 @@ module NLRLogic
     attr_accessor :arr
   end
 
-  DAY_PARTS = CircularListExtended.new [DayPart.new(name: "nishanta", start_hour: 3, start_minute: 36),
-                                        DayPart.new(name: "prataha", start_hour: 6, start_minute: 00),
-                                        DayPart.new(name: "purvahna", start_hour: 8, start_minute: 24),
-                                        DayPart.new(name: "madhyahna", start_hour: 10, start_minute: 48),
-                                        DayPart.new(name: "aparahna", start_hour: 15, start_minute: 36),
-                                        DayPart.new(name: "shayana", start_hour: 18, start_minute: 00),
-                                        DayPart.new(name: "pradosha", start_hour: 20, start_minute: 24),
-                                        DayPart.new(name: "nisha", start_hour: 22, start_minute: 48)]
+  class NLRTime < ::Time
+    def initialize(hour, minute)
+      now = Time.now
+      super(now.year, now.month, now.day, hour, minute)
+    end
+  end
+
+  DAY_PARTS = CircularListExtended.new [DayPart.new(name: "nishanta", start: NLRTime.new(3, 36)),
+                                        DayPart.new(name: "prataha", start: NLRTime.new(6, 0)),
+                                        DayPart.new(name: "purvahna", start: NLRTime.new(8, 24)),
+                                        DayPart.new(name: "madhyahna", start: NLRTime.new(10, 48)),
+                                        DayPart.new(name: "aparahna", start: NLRTime.new(15, 36)),
+                                        DayPart.new(name: "shayana", start: NLRTime.new(18, 0)),
+                                        DayPart.new(name: "pradosha", start: NLRTime.new(20, 24)),
+                                        DayPart.new(name: "nisha", start: NLRTime.new(22, 48))]
 
   class DayPart
     attr_reader :name, :next_day_part, :start_hour, :start_minute
@@ -38,22 +45,7 @@ module NLRLogic
     end
   end
 
-  class NLRTime < ::Time
-    def initialize(hour, minute)
-      now = Time.now
-      super(now.year, now.month, now.day, hour, minute)
-    end
-  end
-
   def self.which_day_part? hour, minute
-    time = NLRTime.new hour, minute
-    DAY_PARTS.each_with_index do |day_part, i|
-      next_day_part = DAY_PARTS[i + 1]
-      if next_day_part.nil? or time.between? NLRTime.new(day_part[:start_hour], day_part[:start_minute]), NLRTime.new(next_day_part[:start_hour], next_day_part[:start_minute])
-        return day_part[:name]
-      else
-        next
-      end
-    end
+    time = NLRTime.new(hour, minute)
   end
 end
