@@ -1,44 +1,53 @@
 require "bundler/setup"
-load "circular-list/circularlist.rb"
 Bundler.require
 
 module NLRLogic
 
+  DAY_PARTS = [{name: "nishanta", hour: 3, minute: 36},
+               {name: "prataha", hour: 6, minute: 0},
+               {name: "purvahna", hour: 8, minute: 24},
+               {name: "madhyahna", hour: 10, minute: 48},
+               {name: "aparahna", hour: 15, minute: 36},
+               {name: "shayana", hour: 18, minute: 0},
+               {name: "pradosha", hour: 20, minute: 24},
+               {name: "nisha", hour: 22, minute: 48, edge: true}]
+
   class DayPart
-    attr_reader :name, :start, :next_index
+    attr_reader :name, :hour, :minute, :next_index
     def initialize(options = {})
       @name = options[:name]
-      @start = options[:start]
-      @next_index = options[:next_index]
+      @hour = options[:hour]
+      @minute = options[:minute]
+      @next_index = options[:edge] ? 0 : DAY_PARTS.index{|dp| dp[:name] == name} + 1
+    end
+
+    def following
+      DayPart.new DAY_PARTS[next_index]
     end
   end
 
   class NLRTime < ::Time
-    def initialize(hour, minute)
+    def initialize hour, minute, day = nil
       now = Time.now
-      super(now.year, now.month, now.day, hour, minute)
-    end
-  end
-
-  DAY_PARTS = [DayPart.new(name: "nishanta", start: NLRTime.new(3, 36), next_index: 1),
-               DayPart.new(name: "prataha", start: NLRTime.new(6, 0), next_index: 2),
-               DayPart.new(name: "purvahna", start: NLRTime.new(8, 24), next_index: 3),
-               DayPart.new(name: "madhyahna", start: NLRTime.new(10, 48), next_index: 4),
-               DayPart.new(name: "aparahna", start: NLRTime.new(15, 36), next_index: 5),
-               DayPart.new(name: "shayana", start: NLRTime.new(18, 0), next_index: 6),
-               DayPart.new(name: "pradosha", start: NLRTime.new(20, 24), next_index: 7),
-               DayPart.new(name: "nisha", start: NLRTime.new(22, 48), next_index: 0)]
-
-  class DayPart
-    def following
-      DAY_PARTS[next_index]
+      day = day ? day : Date.tomorrow.day
+      super(now.year, now.month, day, hour, minute)
     end
   end
 
   def self.which_day_part? hour, minute
-    while NLRTime.new(hour, minute) > DAY_PARTS.current.start
-      DAY_PARTS.next
+    now = NLRTime.new(hour, minute)
+
+    DAY_PARTS.each_with_index do |day_part_info, i|
+      current = DayPart.new(day_part_info)
+      following = current.following
+      start_time = NLRTime.new current.hour, current.minute
+      end_time = NLRTime.new following.hour, following.minute, if current[:edge] then Date.tomorrow.day end
+
+      if now.between? start_time, end_time
+        current
+      else
+        next
+      end
     end
-    DAY_PARTS.previous
   end
 end
